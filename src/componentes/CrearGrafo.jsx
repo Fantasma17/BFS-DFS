@@ -109,7 +109,7 @@ function CrearGrafo({ volverAlMenu }) {
         {hijos.length > 0 && (
           <>
             <button className="btn-azul" onClick={generarGrafo}>Generar Grafo</button>
-            <button className="btn-gris" onClick={limpiarGrafo}>🛠 Limpiar Grafo</button>
+            <button className="btn-gris" onClick={limpiarGrafo}>Limpiar Grafo</button>
           </>
         )}
 

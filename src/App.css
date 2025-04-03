@@ -1,4 +1,5 @@
 /*App.css*/
+
 /* Fuente futurista solo para el menú */
 @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@500&display=swap');
 
@@ -15,8 +16,9 @@
   justify-content: center;
   overflow: hidden;
   position: relative;
+  padding: 20px;
+  box-sizing: border-box;
 }
-
 
 /* Contenedor del menú (sin fondo visible, solo para centrar) */
 .menu-contenido {
@@ -109,3 +111,27 @@
   }
 }
 
+/* RESPONSIVE */
+@media (max-width: 600px) {
+  .typewriter {
+    font-size: 30px;
+    animation: none;
+    border-right: none;
+    white-space: normal;
+    text-align: center;
+  }
+
+  .menu-contenido {
+    padding: 30px 20px;
+  }
+
+  .menu-botones {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .menu-botones button {
+    width: 80%;
+    max-width: 250px;
+  }
+}
