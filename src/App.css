@@ -1,0 +1,111 @@
+/*App.css*/
+/* Fuente futurista solo para el menú */
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@500&display=swap');
+
+/* Fondo visual perfecto */
+.menu-fondo {
+  background-size: cover;
+  background-position: center center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+  height: 100vh;
+  width: 100vw;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  position: relative;
+}
+
+
+/* Contenedor del menú (sin fondo visible, solo para centrar) */
+.menu-contenido {
+  padding: 60px 80px;
+  border-radius: 50px;
+  text-align: center;
+  font-family: 'Orbitron', sans-serif;
+  animation: flotando 6s ease-in-out infinite alternate;
+  position: relative;
+  z-index: 2;
+}
+
+/* Título animado estilo máquina de escribir */
+.typewriter {
+  overflow: hidden;
+  border-right: 2px solid #00f0ff;
+  white-space: nowrap;
+  margin: 0 auto;
+  animation: typing 4s steps(30, end), blink-caret 0.75s step-end infinite;
+  width: fit-content;
+  font-size: 48px;
+  color: #00f0ff;
+  font-family: 'Orbitron', sans-serif;
+  text-shadow: 0 0 10px #00f0ff;
+  margin-bottom: 40px; /* Espacio entre título y botones */
+}
+
+@keyframes typing {
+  from { width: 0 }
+  to { width: 100% }
+}
+
+@keyframes blink-caret {
+  from, to { border-color: transparent }
+  50% { border-color: #00f0ff }
+}
+
+/* Contenedor de botones */
+.menu-botones {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+/* Botones estilo satélite */
+.menu-botones button {
+  background-color: #00f0ff;
+  border: none;
+  color: black;
+  font-size: 20px;
+  font-weight: bold;
+  padding: 15px 30px;
+  border-radius: 12px;
+  cursor: pointer;
+  width: 150px;
+  transition: all 0.3s ease-in-out;
+  box-shadow: 0 0 10px #00f0ff;
+  animation: orbitar 4s ease-in-out infinite alternate;
+  font-family: 'Orbitron', sans-serif;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.menu-botones button:hover {
+  background-color: #00c0cc;
+  transform: scale(1.1);
+  box-shadow: 0 0 15px #00f0ff;
+}
+
+/* Animación de flotación suave del contenedor */
+@keyframes flotando {
+  0% {
+    transform: translateY(0px);
+  }
+  100% {
+    transform: translateY(-8px);
+  }
+}
+
+/* Animación satelital de botones */
+@keyframes orbitar {
+  0% {
+    transform: translateY(0) rotate(0deg);
+  }
+  100% {
+    transform: translateY(-4px) rotate(1deg);
+  }
+}
+

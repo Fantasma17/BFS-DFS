@@ -1,0 +1,77 @@
+/* GrafoVisual.css*/
+/* Estilo del contenedor del grafo */
+.contenedor-grafo {
+    background-color: #111;
+    border-radius: 12px;
+    padding: 10px;
+    box-shadow: 0 0 20px #00f0ff;
+    margin-top: 20px;
+  }
+  
+  /* Título del grafo */
+  .titulo-grafo {
+    text-align: center;
+    color: #00f0ff;
+    font-size: 24px;
+    margin-bottom: 10px;
+  }
+  
+  /* SVG del grafo */
+  svg {
+    display: block;
+    margin: 0 auto;
+    background-color: #1a1a1a;
+    border-radius: 12px;
+  }
+  
+  /* Nodo del grafo */
+  .nodo {
+    stroke: white;
+    stroke-width: 2;
+    transition: fill 0.3s ease;
+  }
+  
+  /* Texto dentro del nodo */
+  .texto {
+    fill: white;
+    font-weight: bold;
+    font-size: 14px;
+  }
+  
+  /* Línea de conexión entre nodos */
+  .link {
+    stroke: #999;
+    stroke-width: 2px;
+  }
+  
+  /* Contenedor de botones BFS/DFS */
+  .botones-recorridos {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    margin-top: 20px;
+  }
+  
+  /* Botón gamer */
+  .boton-gamer {
+    background-color: #111;
+    color: white;
+    border: none;
+    border-radius: 12px;
+    padding: 12px 20px;
+    font-weight: bold;
+    font-family: 'Segoe UI', sans-serif;
+    font-size: 16px;
+    cursor: pointer;
+    box-shadow: 0 0 12px #00f0ff80;
+    transition: background 0.3s, transform 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  
+  .boton-gamer:hover {
+    background-color: #1f1f1f;
+    transform: scale(1.05);
+  }
+  
