@@ -5,53 +5,90 @@ import "./GrafoVisual.css";
 
 function GrafoVisual({ grafo }) {
   const svgRef = useRef();
+  const [nodoInicio, setNodoInicio] = useState('');
+  const [nodoDestino, setNodoDestino] = useState('');
   const [caminoOptimo, setCaminoOptimo] = useState([]);
   const [nodoActual, setNodoActual] = useState(null);
   const [historial, setHistorial] = useState([]);
   const [lineasColores, setLineasColores] = useState({});
+  const [tipoRecorrido, setTipoRecorrido] = useState(''); 
 
   useEffect(() => {
     dibujarGrafo();
   }, [grafo]);
 
+  const convertirEnNoDirigido = (grafoOriginal) => {
+    const grafoBidireccional = {};
+    Object.entries(grafoOriginal).forEach(([padre, hijos]) => {
+      if (!grafoBidireccional[padre]) grafoBidireccional[padre] = [];
+      hijos.forEach((hijo) => {
+        if (!grafoBidireccional[hijo]) grafoBidireccional[hijo] = [];
+        grafoBidireccional[padre].push(hijo);
+        grafoBidireccional[hijo].push(padre);
+      });
+    });
+    return grafoBidireccional;
+  };
+
   const dibujarGrafo = (colores = {}, borde = {}, lineas = {}) => {
     const width = 800;
-    const height = 600;
     const nivelAltura = 150;
 
     const svg = d3.select(svgRef.current);
     svg.selectAll("*").remove();
-    svg.attr("width", width).attr("height", height);
 
+    const grafoNoDirigido = convertirEnNoDirigido(grafo);
     const nodos = new Set();
     const links = [];
 
-    Object.entries(grafo).forEach(([padre, hijos]) => {
+    Object.entries(grafoNoDirigido).forEach(([padre, hijos]) => {
       nodos.add(padre);
       hijos.forEach((hijo) => {
         nodos.add(hijo);
-        links.push({ source: padre, target: hijo });
+        if (!links.some(l =>
+          (l.source === hijo && l.target === padre) ||
+          (l.source === padre && l.target === hijo)
+        )) {
+          links.push({ source: padre, target: hijo });
+        }
       });
     });
 
     const niveles = {};
     const posiciones = {};
 
-    const calcularNivel = (nodo, nivel) => {
-      if (niveles[nodo] === undefined || nivel > niveles[nodo]) {
-        niveles[nodo] = nivel;
-        (grafo[nodo] || []).forEach((hijo) => calcularNivel(hijo, nivel + 1));
-      }
+    const calcularTodosLosNiveles = () => {
+      const visitados = new Set();
+
+      const recorrer = (nodo, nivel) => {
+        if (visitados.has(nodo)) return;
+        visitados.add(nodo);
+        if (niveles[nodo] === undefined || nivel > niveles[nodo]) {
+          niveles[nodo] = nivel;
+        }
+        (grafo[nodo] || []).forEach(hijo => {
+          recorrer(hijo, nivel + 1);
+        });
+      };
+
+      Object.keys(grafo).forEach(nodo => {
+        if (!visitados.has(nodo)) {
+          recorrer(nodo, 0);
+        }
+      });
     };
 
-    const raiz = Object.keys(grafo)[0];
-    calcularNivel(raiz, 0);
+    calcularTodosLosNiveles();
 
     const nivelesAgrupados = {};
     Object.entries(niveles).forEach(([nodo, nivel]) => {
       if (!nivelesAgrupados[nivel]) nivelesAgrupados[nivel] = [];
       nivelesAgrupados[nivel].push(nodo);
     });
+
+    const cantidadNiveles = Object.keys(nivelesAgrupados).length || 1;
+    const height = 100 + cantidadNiveles * nivelAltura;
+    svg.attr("width", width).attr("height", height);
 
     Object.entries(nivelesAgrupados).forEach(([nivel, nodosNivel]) => {
       const y = 100 + nivel * nivelAltura;
@@ -61,41 +98,37 @@ function GrafoVisual({ grafo }) {
       });
     });
 
-    svg
-      .append("g")
+    svg.append("g")
       .attr("class", "links")
       .selectAll("line")
       .data(links)
       .enter()
       .append("line")
       .attr("class", "link")
-      .attr("x1", (d) => posiciones[d.source].x)
-      .attr("y1", (d) => posiciones[d.source].y)
-      .attr("x2", (d) => posiciones[d.target].x)
-      .attr("y2", (d) => posiciones[d.target].y)
-      .attr("stroke", (d) => lineas[`${d.source}-${d.target}`] || "gray")
+      .attr("x1", d => posiciones[d.source].x)
+      .attr("y1", d => posiciones[d.source].y)
+      .attr("x2", d => posiciones[d.target].x)
+      .attr("y2", d => posiciones[d.target].y)
+      .attr("stroke", d => lineas[`${d.source}-${d.target}`] || lineas[`${d.target}-${d.source}`] || "gray")
       .attr("stroke-width", 2);
 
-    const node = svg
-      .append("g")
+    const node = svg.append("g")
       .attr("class", "nodes")
       .selectAll("g")
       .data(Array.from(nodos))
       .enter()
       .append("g")
-      .attr("transform", (d) => `translate(${posiciones[d].x}, ${posiciones[d].y})`);
+      .attr("transform", d => `translate(${posiciones[d].x}, ${posiciones[d].y})`);
 
-    node
-      .append("circle")
+    node.append("circle")
       .attr("r", 22)
       .attr("class", "nodo")
-      .attr("fill", (d) => colores[d] || "white")
-      .attr("stroke", (d) => borde[d] || "gray")
+      .attr("fill", d => colores[d] || "white")
+      .attr("stroke", d => borde[d] || "gray")
       .attr("stroke-width", 3);
 
-    node
-      .append("text")
-      .text((d) => d)
+    node.append("text")
+      .text(d => d)
       .attr("dy", 5)
       .attr("text-anchor", "middle")
       .attr("class", "texto")
@@ -107,6 +140,13 @@ function GrafoVisual({ grafo }) {
   const esperar = (ms) => new Promise((res) => setTimeout(res, ms));
 
   const aplicarBFS = async () => {
+    setTipoRecorrido("Recorrido BFS"); // 
+    const grafoActual = convertirEnNoDirigido(grafo);
+    if (!grafoActual[nodoInicio] || !grafoActual[nodoDestino]) {
+      alert("Nodo de inicio o destino no existe en el grafo");
+      return;
+    }
+
     const visitados = new Set();
     const colores = {};
     const borde = {};
@@ -114,14 +154,11 @@ function GrafoVisual({ grafo }) {
     const padres = {};
     const historialPaso = [];
     const lineas = {};
-    const inicio = Object.keys(grafo)[0];
 
-    if (!inicio) return;
-
-    cola.push(inicio);
-    colores[inicio] = "#2196f3";
-    setNodoActual(inicio);
-    historialPaso.push(inicio);
+    cola.push(nodoInicio);
+    colores[nodoInicio] = "#2196f3";
+    setNodoActual(nodoInicio);
+    historialPaso.push(nodoInicio);
     dibujarGrafo(colores, borde, lineas);
     await esperar(1000);
 
@@ -133,30 +170,35 @@ function GrafoVisual({ grafo }) {
       dibujarGrafo(colores, borde, lineas);
       await esperar(1000);
 
-      (grafo[actual] || []).forEach((hijo) => {
-        if (!visitados.has(hijo) && !cola.includes(hijo)) {
-          colores[hijo] = "#2196f3";
-          cola.push(hijo);
-          padres[hijo] = actual;
-          lineas[`${actual}-${hijo}`] = "#00ff00";
+      if (actual === nodoDestino) break;
+
+      for (const vecino of grafoActual[actual] || []) {
+        if (!visitados.has(vecino) && !cola.includes(vecino)) {
+          colores[vecino] = "#2196f3";
+          cola.push(vecino);
+          padres[vecino] = actual;
+          lineas[`${actual}-${vecino}`] = "#00ff00";
         }
-      });
+      }
 
       visitados.add(actual);
     }
 
-    const final = historialPaso[historialPaso.length - 1];
     const camino = [];
-    let actual = final;
+    let actual = nodoDestino;
     while (actual) {
       camino.unshift(actual);
       actual = padres[actual];
     }
 
-    camino.forEach((nodo) => {
-      borde[nodo] = "#00ff00";
-    });
+    if (camino.length === 1 && camino[0] !== nodoInicio) {
+      alert("No hay camino entre los nodos seleccionados");
+      setCaminoOptimo(["No hay camino"]);
+      setHistorial(["Sin conexión"]);
+      return;
+    }
 
+    camino.forEach(nodo => borde[nodo] = "#00ff00");
     setNodoActual(null);
     dibujarGrafo(colores, borde, lineas);
     setCaminoOptimo(camino);
@@ -165,13 +207,19 @@ function GrafoVisual({ grafo }) {
   };
 
   const aplicarDFS = async () => {
+    setTipoRecorrido("Recorrido DFS"); // 
+    const grafoActual = convertirEnNoDirigido(grafo);
+    if (!grafoActual[nodoInicio] || !grafoActual[nodoDestino]) {
+      alert("Nodo de inicio o destino no existe en el grafo");
+      return;
+    }
+
     const visitados = new Set();
     const colores = {};
     const borde = {};
     const padres = {};
     const historialPaso = [];
     const lineas = {};
-    const inicio = Object.keys(grafo)[0];
 
     const dfs = async (nodo) => {
       colores[nodo] = "#2196f3";
@@ -182,11 +230,11 @@ function GrafoVisual({ grafo }) {
 
       visitados.add(nodo);
 
-      for (const hijo of grafo[nodo] || []) {
-        if (!visitados.has(hijo)) {
-          padres[hijo] = nodo;
-          lineas[`${nodo}-${hijo}`] = "#00ff00";
-          await dfs(hijo);
+      for (const vecino of grafoActual[nodo] || []) {
+        if (!visitados.has(vecino)) {
+          padres[vecino] = nodo;
+          lineas[`${nodo}-${vecino}`] = "#00ff00";
+          await dfs(vecino);
         }
       }
 
@@ -196,21 +244,23 @@ function GrafoVisual({ grafo }) {
       await esperar(1000);
     };
 
-    if (!inicio) return;
-    await dfs(inicio);
+    await dfs(nodoInicio);
 
-    const final = historialPaso[historialPaso.length - 1];
     const camino = [];
-    let actual = final;
+    let actual = nodoDestino;
     while (actual) {
       camino.unshift(actual);
       actual = padres[actual];
     }
 
-    camino.forEach((nodo) => {
-      borde[nodo] = "#00ff00";
-    });
+    if (camino.length === 1 && camino[0] !== nodoInicio) {
+      alert("No hay camino entre los nodos seleccionados");
+      setCaminoOptimo(["No hay camino"]);
+      setHistorial(["Sin conexión"]);
+      return;
+    }
 
+    camino.forEach(nodo => borde[nodo] = "#00ff00");
     setNodoActual(null);
     dibujarGrafo(colores, borde, lineas);
     setCaminoOptimo(camino);
@@ -220,15 +270,39 @@ function GrafoVisual({ grafo }) {
 
   return (
     <div className="contenedor-grafo">
+      {tipoRecorrido && (
+        <h2 style={{ color: '#00f0ff', textAlign: 'center', fontSize: '22px', marginBottom: '10px' }}>
+          {tipoRecorrido}
+        </h2>
+      )}
+
       <svg ref={svgRef}></svg>
 
       <div className="botones-recorridos">
-        <button className="boton-gamer" onClick={aplicarBFS}>
-           Aplicar BFS
-        </button>
-        <button className="boton-gamer" onClick={aplicarDFS}>
-          Aplicar DFS
-        </button>
+        <div className="bloque-input">
+          <label>Nodo de Inicio:</label>
+          <input
+            type="text"
+            value={nodoInicio}
+            onChange={(e) => setNodoInicio(e.target.value)}
+            placeholder="Escribe nodo de inicio"
+          />
+        </div>
+
+        <div className="bloque-input">
+          <label>Nodo de Destino:</label>
+          <input
+            type="text"
+            value={nodoDestino}
+            onChange={(e) => setNodoDestino(e.target.value)}
+            placeholder="Escribe nodo de destino"
+          />
+        </div>
+
+        <div className="bloque-botones">
+          <button className="boton-gamer" onClick={aplicarBFS}>Aplicar BFS</button>
+          <button className="boton-gamer" onClick={aplicarDFS}>Aplicar DFS</button>
+        </div>
       </div>
 
       {nodoActual && (
@@ -239,7 +313,7 @@ function GrafoVisual({ grafo }) {
 
       {historial.length > 0 && (
         <p style={{ color: '#2196f3', textAlign: 'center', fontWeight: 'bold' }}>
-          Mostramos: {historial.join(" → ")}
+          <span style={{ textDecoration: 'underline' }}>Mostramos:</span> {historial.join(" → ")}
         </p>
       )}
 
